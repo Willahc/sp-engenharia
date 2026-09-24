@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SP Engenharia 360° — Plataforma de Inteligência, Ciclo de Obras & CRM B2B</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Leaflet CSS & JS for Interactive Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css?v=7">
+</head>
+<body class="dark-theme">
+
+  <!-- Top Navigation & Branding Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-icon">
+        <i data-lucide="building-2"></i>
+      </div>
+      <div class="logo-text">
+        <h1>SP ENGENHARIA <span class="badge-version">360° ENTERPRISE</span></h1>
+        <p class="subtitle">Monitoramento do Ciclo de Obras, CRM B2B & Inteligência Preditiva</p>
+      </div>
+    </div>
+    
+    <div class="header-center">
+      <div class="header-search">
+        <i data-lucide="search" class="search-icon"></i>
+        <input type="text" id="globalSearch" placeholder="Buscar por obra, contratante, decisor, município ou fornecedor..." autocomplete="off">
+        <button id="clearSearchBtn" class="clear-search" title="Limpar busca">&times;</button>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="stat-pill">
+        <span class="pulse-dot"></span>
+        <span class="stat-label">CAPEX Monitorado:</span>
+        <span class="stat-val" id="headerCapex">R$ 1,03 Tri</span>
+      </div>
+      <button class="btn btn-primary" id="btnExportCsv" title="Exportar dados filtrados para Excel/CSV">
+        <i data-lucide="download"></i>
+        <span>Exportar CSV</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main App Tabs Navigation -->
+  <nav class="app-nav">
+    <button class="nav-tab active" data-tab="overview">
+      <i data-lucide="layout-dashboard"></i>
+      <span>Painel Executivo</span>
+    </button>
+    <button class="nav-tab" data-tab="explorer">
+      <i data-lucide="hard-hat"></i>
+      <span>Explorador de Obras</span>
+      <span class="tab-badge" id="tabCountObras">5.938</span>
+    </button>
+    <button class="nav-tab" data-tab="sweetspot">
+      <i data-lucide="target"></i>
+      <span>Sweet Spot Ouro</span>
+      <span class="tab-badge badge-gold" id="tabCountSweetSpot">334</span>
+    </button>
+    <button class="nav-tab" data-tab="crm">
+      <i data-lucide="kanban"></i>
+      <span>CRM & Funil B2B</span>
+      <span class="tab-badge badge-blue" id="tabCountCrm">0</span>
+    </button>
+    <button class="nav-tab" data-tab="rfq">
+      <i data-lucide="calculator"></i>
+      <span>Simulador RFQ & Cotações</span>
+    </button>
+    <button class="nav-tab" data-tab="map">
+      <i data-lucide="map"></i>
+      <span>Mapa Geoespacial SP</span>
+    </button>
+    <button class="nav-tab" data-tab="regional">
+      <i data-lucide="map-pin"></i>
+      <span>Polos Regionais</span>
+    </button>
+    <button class="nav-tab" data-tab="suppliers">
+      <i data-lucide="boxes"></i>
+      <span>Cadeia de Fornecedores</span>
+    </button>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="main-container">
+
+    <!-- Loading State -->
+    <div id="loadingOverlay" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Carregando ecossistema de obras, matches e inteligência comercial de São Paulo...</p>
+    </div>
+
+    <!-- TAB 1: PAINEL EXECUTIVO & KPIS -->
+    <section id="tab-overview" class="tab-content active">
+      
+      <!-- KPI Hero Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card" data-accent="blue">
+          <div class="kpi-icon"><i data-lucide="coins"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-title">Investimento Total (CAPEX)</span>
+            <div class="kpi-value" id="kpiCapexTotal">R$ 1,03 Trilhão</div>
+            <span class="kpi-sub">5.930 obras com valor orçado</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" data-accent="purple">
+          <div class="kpi-icon"><i data-lucide="construction"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-title">Universo de Obras</span>
+            <div class="kpi-value" id="kpiTotalObras">5.938</div>
+            <span class="kpi-sub">458 municípios paulistas mapeados</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" data-accent="green">
+          <div class="kpi-icon"><i data-lucide="users"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-title">Decisores Mapeados</span>
+            <div class="kpi-value" id="kpiTotalDecisores">3.769 <small>obras</small></div>
+            <span class="kpi-sub">6.173 contatos (3.125 leads 'Verde')</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" data-accent="amber">
+          <div class="kpi-icon"><i data-lucide="handshake"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-title">Matches Homologados</span>
+            <div class="kpi-value" id="kpiTotalMatches">47.504</div>
+            <span class="kpi-sub">R$ 424,36 Bi em demanda de insumos</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" data-accent="gold">
+          <div class="kpi-icon"><i data-lucide="zap"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-title">Sweet Spot Comercial Ouro</span>
+            <div class="kpi-value" id="kpiSweetSpot">334 <small>obras</small></div>
+            <span class="kpi-sub">Decisor Verde + Match Fornecedor</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="card-header">
+            <h3><i data-lucide="git-branch"></i> Ciclo de Vida da Obra (Maturidade das Fases)</h3>
+            <span class="card-hint">Distribuição das 5.938 obras por fase real</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="chartFases"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="card-header">
+            <h3><i data-lucide="pie-chart"></i> Investimento por Setor Econômico</h3>
+            <span class="card-hint">CAPEX acumulado em R$ Bilhões</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="chartSetores"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="card-header">
+            <h3><i data-lucide="bar-chart-3"></i> Top 10 Municípios por Volume de Investimento</h3>
+            <span class="card-hint">Polos com maior concentração de capital</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="chartMunicipios"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="card-header">
+            <h3><i data-lucide="layers"></i> Concentração de Porte & Faixas de CAPEX</h3>
+            <span class="card-hint">Regra de Pareto: 168 Mega Obras = 84% do Capital</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="chartFaixasCapex"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top 10 Mega Obras Highlight Table -->
+      <div class="content-card">
+        <div class="card-header flex-between">
+          <div>
+            <h3><i data-lucide="award"></i> Top 10 Mega Obras em São Paulo (Key Accounts)</h3>
+            <span class="card-hint">Projetos bilionários prioritários para grandes fornecedores e consórcios</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btnFilterMegaObras">Ver Todas as 168 Mega Obras</button>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="tableTopMegaObras">
+            <thead>
+              <tr>
+                <th>Nome da Obra</th>
+                <th>Setor</th>
+                <th>Município</th>
+                <th>CAPEX Estimado</th>
+                <th>Fase Real</th>
+                <th>Contratante</th>
+                <th>Decisores</th>
+                <th>Matches</th>
+                <th>Timing & IA</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyTopMegaObras">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 2: EXPLORADOR DE OBRAS (DATA GRID & FILTROS) -->
+    <section id="tab-explorer" class="tab-content">
+      
+      <!-- Filter Controls Bar -->
+      <div class="filters-card">
+        <div class="filters-header">
+          <div class="filters-title">
+            <i data-lucide="sliders-horizontal"></i>
+            <span>Filtros Estratégicos</span>
+            <span class="filter-count" id="activeFilterBadge">0 ativos</span>
+          </div>
+          <div class="filters-actions">
+            <button class="btn btn-ghost btn-sm" id="btnResetFilters">
+              <i data-lucide="rotate-ccw"></i>
+              <span>Limpar Filtros</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label for="filterSetor">Setor</label>
+            <select id="filterSetor" class="form-select">
+              <option value="">Todos os Setores</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filterFase">Fase da Obra</label>
+            <select id="filterFase" class="form-select">
+              <option value="">Todas as Fases</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filterStatusB2B">Status Comercial / Marketplace</label>
+            <select id="filterStatusB2B" class="form-select">
+              <option value="">Todos os Status</option>
+              <option value="1_SWEET_SPOT_OURO">Sweet Spot Ouro (Decisor Verde + Match)</option>
+              <option value="2_SWEET_SPOT_PRATA">Sweet Spot Prata</option>
+              <option value="3_MATCH_PRONTO">Match Pronto sem Decisor</option>
+              <option value="4_MEGA_OBRA">Mega Obra Prioridade Match (>= R$ 50M)</option>
+              <option value="5_PROSPECCAO_DIRETA">Decisor Mapeado para Outbound</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filterQualidade">Nível de Qualidade</label>
+            <select id="filterQualidade" class="form-select">
+              <option value="">Todos os Níveis</option>
+              <option value="OURO">Ouro (Alta Relevância)</option>
+              <option value="PRATA">Prata (Média Relevância)</option>
+              <option value="BRONZE">Bronze</option>
+              <option value="PIPELINE">Pipeline</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filterMunicipio">Município (SP)</label>
+            <select id="filterMunicipio" class="form-select">
+              <option value="">Todos os Municípios</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filterSort">Ordenar Por</label>
+            <select id="filterSort" class="form-select">
+              <option value="capex_desc">Maior CAPEX</option>
+              <option value="capex_asc">Menor CAPEX</option>
+              <option value="ai_score_desc">Maior Score Preditivo IA</option>
+              <option value="lead_score_desc">Maior Lead Score</option>
+              <option value="matches_desc">Mais Matches de Fornecedores</option>
+              <option value="decisores_desc">Mais Decisores Mapeados</option>
+              <option value="nome_asc">Nome da Obra (A-Z)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- View Controls & Counter -->
+      <div class="results-bar">
+        <div class="results-info">
+          Exibindo <strong id="displayedCount">0</strong> de <strong id="totalFilteredCount">0</strong> obras encontradas 
+          <span class="total-capex-filtered" id="filteredCapexSum">(CAPEX Total: R$ 0 Bi)</span>
+        </div>
+        <div class="view-toggles">
+          <button class="view-btn" id="btnViewCards" title="Visualização em Cards">
+            <i data-lucide="grid"></i>
+          </button>
+          <button class="view-btn active" id="btnViewTable" title="Visualização em Lista">
+            <i data-lucide="list"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid Cards Container -->
+      <div id="obrasGrid" class="obras-grid hidden">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- Table View Container -->
+      <div id="obrasTableContainer" class="table-responsive">
+        <table class="data-table" id="obrasMainTable">
+          <thead>
+            <tr>
+              <th>Status B2B</th>
+              <th>Nome da Obra</th>
+              <th>Setor</th>
+              <th>Município</th>
+              <th>CAPEX</th>
+              <th>Fase Real</th>
+              <th>Contratante</th>
+              <th>Decisor Principal</th>
+              <th>Matches</th>
+              <th>Score IA</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="obrasMainTableBody">
+            <!-- Rendered via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-bar">
+        <button class="btn btn-secondary btn-sm" id="btnPrevPage" disabled>
+          <i data-lucide="chevron-left"></i> Anterior
+        </button>
+        <span class="page-indicator" id="pageIndicator">Página 1 de 1</span>
+        <button class="btn btn-secondary btn-sm" id="btnNextPage">
+          Próxima <i data-lucide="chevron-right"></i>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- TAB 3: SWEET SPOT COMERCIAL -->
+    <section id="tab-sweetspot" class="tab-content">
+      <div class="sweetspot-hero">
+        <div class="sweetspot-badge">
+          <i data-lucide="target"></i>
+          <span>SWEET SPOT COMERCIAL B2B OURO</span>
+        </div>
+        <h2>Obras Qualificadas com Decisor Verde & Matches Homologados</h2>
+        <p>Projetos prioritários que reúnem simultaneamente <strong>Decisores C-Level / Suprimentos com Contatos Validados</strong> e <strong>Fornecedores Paulistas Homologados</strong> com scores de compatibilidade até 100.</p>
+      </div>
+
+      <!-- Fast Metrics for Sweet Spot -->
+      <div class="sweetspot-metrics-grid">
+        <div class="metric-box">
+          <span class="metric-num" id="sweetCapexTotal">R$ 412 Bi</span>
+          <span class="metric-lbl">CAPEX no Sweet Spot</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-num" id="sweetInsumosTotal">R$ 186 Bi</span>
+          <span class="metric-lbl">Demanda Estimada de Insumos</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-num">334 Obras</span>
+          <span class="metric-lbl">Nível Ouro Imediato</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-num">100%</span>
+          <span class="metric-lbl">Com Telefone / LinkedIn Mapeados</span>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header flex-between">
+          <h3><i data-lucide="list-checks"></i> Obras Qualificadas no Sweet Spot</h3>
+          <div class="btn-group">
+            <button class="btn btn-secondary btn-sm" onclick="addAllSweetSpotToCrm()">
+              <i data-lucide="user-plus"></i> Importar Todas para o CRM
+            </button>
+            <button class="btn btn-primary btn-sm" id="btnExportSweetSpot">
+              <i data-lucide="file-spreadsheet"></i> Exportar Lista Sweet Spot
+            </button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="tableSweetSpot">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Obra</th>
+                <th>Setor</th>
+                <th>CAPEX</th>
+                <th>Decisor Principal & Cargo</th>
+                <th>Contatos Decisor</th>
+                <th>Top Matches Fornecedores</th>
+                <th>Timing IA</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbodySweetSpot">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: CRM & FUNIL DE PROSPECÇÃO B2B (KANBAN) -->
+    <section id="tab-crm" class="tab-content">
+      
+      <!-- CRM Header Banner -->
+      <div class="crm-hero">
+        <div class="crm-header-info">
+          <h2><i data-lucide="kanban"></i> CRM B2B & Funil de Prospecção de Obras</h2>
+          <p>Gerencie o ciclo comercial de ponta a ponta: da abordagem ao decisor líder até o fechamento de contratos de fornecimento.</p>
+        </div>
+        <div class="crm-header-actions">
+          <label class="crm-search-wrap">
+            <i data-lucide="search"></i>
+            <input id="crmSearch" type="search" placeholder="Buscar no pipeline..." oninput="filterCrmPipeline(this.value)">
+          </label>
+          <button class="btn btn-secondary btn-sm" onclick="loadDefaultSweetSpotCrm()">
+            <i data-lucide="sparkles"></i> Carregar Top Sweet Spot
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="exportCrmPipelineCsv()">
+            <i data-lucide="download"></i> Exportar Pipeline CSV
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="clearCrmPipeline()">
+            <i data-lucide="trash-2"></i> Limpar Pipeline
+          </button>
+        </div>
+      </div>
+
+      <!-- CRM Metrics Strip -->
+      <div class="crm-metrics-strip">
+        <div class="crm-metric-item">
+          <span class="crm-metric-val" id="crmStatTotalLeads">0</span>
+          <span class="crm-metric-lbl">Leads no Pipeline</span>
+        </div>
+        <div class="crm-metric-item">
+          <span class="crm-metric-val highlight" id="crmStatTotalCapex">R$ 0 Mi</span>
+          <span class="crm-metric-lbl">CAPEX Total no Funil</span>
+        </div>
+        <div class="crm-metric-item">
+          <span class="crm-metric-val" id="crmStatInProposal">0</span>
+          <span class="crm-metric-lbl">Em Proposta / RFQ</span>
+        </div>
+        <div class="crm-metric-item">
+          <span class="crm-metric-val text-green" id="crmStatWon">0</span>
+          <span class="crm-metric-lbl">Negócios Fechados</span>
+        </div>
+        <div class="crm-metric-item">
+          <span class="crm-metric-val" id="crmStatWinRate">0%</span>
+          <span class="crm-metric-lbl">Taxa de Conversão Estimada</span>
+        </div>
+      </div>
+
+      <!-- CRM Kanban Board (5 Stages) -->
+      <div class="crm-kanban-board">
+        
+        <!-- Column 1: Leads Sweet Spot -->
+        <div class="kanban-column" data-stage="lead_novo">
+          <div class="kanban-col-header" style="border-top-color: var(--accent-gold);">
+            <div class="col-title-wrap">
+              <span class="col-dot dot-gold"></span>
+              <h4>1. Novo Lead Sweet Spot</h4>
+            </div>
+            <span class="col-count" id="count-lead_novo">0</span>
+          </div>
+          <div class="kanban-col-sub" id="capex-lead_novo">R$ 0 Mi</div>
+          <div class="kanban-cards-container" id="kanban-container-lead_novo" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'lead_novo')">
+            <!-- Cards via JS -->
+          </div>
+        </div>
+
+        <!-- Column 2: Contato Iniciado -->
+        <div class="kanban-column" data-stage="contato_feito">
+          <div class="kanban-col-header" style="border-top-color: var(--accent-cyan);">
+            <div class="col-title-wrap">
+              <span class="col-dot dot-cyan"></span>
+              <h4>2. Contato / Abordagem</h4>
+            </div>
+            <span class="col-count" id="count-contato_feito">0</span>
+          </div>
+          <div class="kanban-col-sub" id="capex-contato_feito">R$ 0 Mi</div>
+          <div class="kanban-cards-container" id="kanban-container-contato_feito" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'contato_feito')">
+            <!-- Cards via JS -->
+          </div>
+        </div>
+
+        <!-- Column 3: Reunião / Qualificação -->
+        <div class="kanban-column" data-stage="reuniao">
+          <div class="kanban-col-header" style="border-top-color: var(--accent-primary);">
+            <div class="col-title-wrap">
+              <span class="col-dot dot-primary"></span>
+              <h4>3. Reunião / Qualificação</h4>
+            </div>
+            <span class="col-count" id="count-reuniao">0</span>
+          </div>
+          <div class="kanban-col-sub" id="capex-reuniao">R$ 0 Mi</div>
+          <div class="kanban-cards-container" id="kanban-container-reuniao" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'reuniao')">
+            <!-- Cards via JS -->
+          </div>
+        </div>
+
+        <!-- Column 4: Proposta / RFQ -->
+        <div class="kanban-column" data-stage="proposta">
+          <div class="kanban-col-header" style="border-top-color: var(--accent-amber);">
+            <div class="col-title-wrap">
+              <span class="col-dot dot-amber"></span>
+              <h4>4. Proposta / RFQ</h4>
+            </div>
+            <span class="col-count" id="count-proposta">0</span>
+          </div>
+          <div class="kanban-col-sub" id="capex-proposta">R$ 0 Mi</div>
+          <div class="kanban-cards-container" id="kanban-container-proposta" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'proposta')">
+            <!-- Cards via JS -->
+          </div>
+        </div>
+
+        <!-- Column 5: Contrato Fechado -->
+        <div class="kanban-column" data-stage="fechado">
+          <div class="kanban-col-header" style="border-top-color: var(--accent-emerald);">
+            <div class="col-title-wrap">
+              <span class="col-dot dot-green"></span>
+              <h4>5. Contrato Fechado</h4>
+            </div>
+            <span class="col-count" id="count-fechado">0</span>
+          </div>
+          <div class="kanban-col-sub" id="capex-fechado">R$ 0 Mi</div>
+          <div class="kanban-cards-container" id="kanban-container-fechado" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'fechado')">
+            <!-- Cards via JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- TAB 5: SIMULADOR RFQ & COTAÇÕES DINÂMICAS -->
+    <section id="tab-rfq" class="tab-content">
+      
+      <div class="rfq-hero">
+        <div class="rfq-hero-text">
+          <h2><i data-lucide="calculator"></i> Simulador de Cotações & Gerador de RFQ</h2>
+          <p>Monte pacotes de suprimentos e serviços para qualquer obra em SP, simule o BDI/orçamento e gere a minuta formal de Request For Quote para os fornecedores homologados.</p>
+        </div>
+      </div>
+
+      <!-- Step 1: Obra Selection & Scope Summary -->
+      <div class="rfq-grid-layout">
+        
+        <!-- Left Column: Controls & Scope -->
+        <div class="rfq-control-panel">
+          
+          <div class="content-card">
+            <div class="card-header">
+              <h3><i data-lucide="search"></i> 1. Selecionar Obra Alvo</h3>
+            </div>
+            <div class="rfq-selector-wrap">
+              <label for="rfqObraSelect" style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px; display: block;">Selecione uma obra do catálogo:</label>
+              <select id="rfqObraSelect" class="form-select" onchange="handleRfqObraSelect(this.value)">
+                <!-- Populated via JS -->
+              </select>
+            </div>
+
+            <!-- Active Obra Quick Card -->
+            <div id="rfqObraCard" class="rfq-active-obra-card">
+              <div class="active-obra-head">
+                <span class="badge badge-execucao" id="rfqObraFase">EM_EXECUCAO</span>
+                <span class="badge badge-ouro" id="rfqObraSetor">SANEAMENTO</span>
+              </div>
+              <h4 id="rfqObraNome">Sabesp — Plano Universalização</h4>
+              <p id="rfqObraContratante" class="text-muted"><i data-lucide="building"></i> Sabesp</p>
+              <div class="rfq-obra-stat-row">
+                <div>
+                  <span class="stat-lbl">CAPEX Total</span>
+                  <strong class="text-green" id="rfqObraCapex">R$ 68,00 Bi</strong>
+                </div>
+                <div>
+                  <span class="stat-lbl">Demanda Insumos</span>
+                  <strong id="rfqObraDemanda">R$ 10,92 Bi</strong>
+                </div>
+                <div>
+                  <span class="stat-lbl">Decisor Líder</span>
+                  <strong id="rfqObraDecisor">Angel Luis</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Customizer & BDI -->
+          <div class="content-card">
+            <div class="card-header">
+              <h3><i data-lucide="sliders"></i> 2. Parâmetros da Cotação & BDI</h3>
+            </div>
+            
+            <div class="rfq-params-form">
+              <div class="form-group">
+                <label>Pacote de Suprimento / Categoria</label>
+                <select id="rfqPacoteTipo" class="form-select" onchange="updateRfqMinuta()">
+                  <option value="civil_pesada">Construção Civil Pesada & Terraplanagem</option>
+                  <option value="estruturas_aco">Estruturas Metálicas, Aço & Pré-Moldados</option>
+                  <option value="instalacoes_eletricas">Instalações Elétricas / HVAC / Utilidades</option>
+                  <option value="bombas_valvulas">Bombas, Compressores & Válvulas Industriais</option>
+                  <option value="engenharia_projetos">Engenharia Consultiva & Gerenciamento</option>
+                  <option value="geral_completo">Pacote Turnkey Completo</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Prazo Limite para Resposta dos Fornecedores</label>
+                <select id="rfqPrazoSelect" class="form-select" onchange="updateRfqMinuta()">
+                  <option value="10 dias corridos">10 dias corridos (Fast-Track)</option>
+                  <option value="15 dias corridos" selected>15 dias corridos (Padrão)</option>
+                  <option value="30 dias corridos">30 dias corridos (Projetos Complexos)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <div class="slider-header">
+                  <label>Margem de BDI / Contingência Orçamentária</label>
+                  <span id="rfqBdiVal" class="slider-badge">15%</span>
+                </div>
+                <input type="range" id="rfqBdiSlider" min="5" max="30" step="1" value="15" class="form-range" oninput="handleBdiChange(this.value)">
+              </div>
+
+              <div class="form-group">
+                <label>Condição de Pagamento Prevista</label>
+                <select id="rfqPagamentoSelect" class="form-select" onchange="updateRfqMinuta()">
+                  <option value="Medição Mensal 30 DDL">Medição Mensal (30 DDL)</option>
+                  <option value="20% Sinal + Saldo por Medição">20% Sinal + Saldo por Medição</option>
+                  <option value="Contra-Entrega de Insumos">Contra-Entrega de Insumos (CIF Canteiro)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Fornecedores Convidados -->
+          <div class="content-card">
+            <div class="card-header flex-between">
+              <h3><i data-lucide="users"></i> 3. Fornecedores Convidados</h3>
+              <span class="badge badge-pipeline" id="rfqSelectedSuppliersCount">4 Fornecedores</span>
+            </div>
+            <div id="rfqSuppliersChecklist" class="rfq-suppliers-checklist">
+              <!-- Suppliers Checkboxes rendered via JS -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Live RFQ Preview Document -->
+        <div class="rfq-preview-panel">
+          <div class="content-card" style="height: 100%; display: flex; flex-direction: column;">
+            <div class="card-header flex-between">
+              <div>
+                <h3><i data-lucide="file-check"></i> Minuta Oficial de Request For Quote (RFQ)</h3>
+                <span class="card-hint">Dossiê de convocação técnica e comercial formatado</span>
+              </div>
+              <div class="btn-group">
+                <button class="btn btn-secondary btn-sm" onclick="copyRfqMinuta()">
+                  <i data-lucide="copy"></i> Copiar Minuta
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="downloadRfqDoc()">
+                  <i data-lucide="file-down"></i> Baixar RFQ (.txt)
+                </button>
+              </div>
+            </div>
+
+            <div class="rfq-doc-body" id="rfqMinutaDoc">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- TAB 6: MAPA GEOESPACIAL INTERATIVO DE SP (LEAFLET) -->
+    <section id="tab-map" class="tab-content">
+      
+      <div class="map-controls-card">
+        <div class="map-controls-left">
+          <div class="map-title-wrap">
+            <i data-lucide="map-pin" class="text-cyan"></i>
+            <h3>Mapa Geoespacial do Ecossistema de Obras de SP</h3>
+          </div>
+          <div class="map-stats-strip">
+            <span>Obras no Mapa: <strong id="mapCountVisible">0</strong></span>
+            <span>•</span>
+            <span>CAPEX Visível: <strong id="mapCapexVisible" class="text-green">R$ 0 Bi</strong></span>
+          </div>
+        </div>
+
+        <div class="map-controls-right">
+          <select id="mapFilterSetor" class="form-select form-select-sm" onchange="updateMapMarkers()">
+            <option value="">Todos os Setores</option>
+          </select>
+          <select id="mapFilterFase" class="form-select form-select-sm" onchange="updateMapMarkers()">
+            <option value="">Todas as Fases</option>
+            <option value="EM_EXECUCAO">Em Execução</option>
+            <option value="LICENCIAMENTO">Licenciamento</option>
+            <option value="PLANEJAMENTO">Planejamento</option>
+            <option value="CONTRATACAO">Contratação</option>
+          </select>
+          <select id="mapFilterStatus" class="form-select form-select-sm" onchange="updateMapMarkers()">
+            <option value="">Todos os Status</option>
+            <option value="sweet">Apenas Sweet Spot Ouro</option>
+            <option value="mega">Apenas Mega Obras (>= R$ 1 Bi)</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="resetMapCenter()" title="Centralizar Mapa em SP">
+            <i data-lucide="crosshair"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Map Viewport -->
+      <div class="map-container-wrap">
+        <div id="leafletMap" class="leaflet-map-view"></div>
+      </div>
+
+      <!-- Map Bottom Legend -->
+      <div class="map-legend-card">
+        <div class="legend-item"><span class="legend-dot" style="background: #06b6d4;"></span> Saneamento</div>
+        <div class="legend-item"><span class="legend-dot" style="background: #6366f1;"></span> Infraestrutura</div>
+        <div class="legend-item"><span class="legend-dot" style="background: #f59e0b;"></span> Energia</div>
+        <div class="legend-item"><span class="legend-dot" style="background: #a855f7;"></span> Industrial & Automotivo</div>
+        <div class="legend-item"><span class="legend-dot" style="background: #10b981;"></span> Tecnologia & Data Centers</div>
+        <div class="legend-item"><span class="legend-dot" style="background: #fbbf24;"></span> Logístico & Portuário</div>
+        <div class="legend-item" style="margin-left: auto; color: var(--text-muted); font-size: 0.78rem;">
+          <i data-lucide="info"></i> Clique em qualquer marcador no mapa para ver a ficha completa e abrir o Dossiê 360°.
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 7: POLOS REGIONAIS -->
+    <section id="tab-regional" class="tab-content">
+      <div class="regional-grid">
+        <div class="content-card">
+          <div class="card-header">
+            <h3><i data-lucide="map"></i> Panorama de Investimentos por Polo Regional</h3>
+            <span class="card-hint">Cruzamento de Obras, CAPEX e Fornecedores Ativos</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="tableRegional">
+              <thead>
+                <tr>
+                  <th>Polo / Município</th>
+                  <th>Obras Mapeadas</th>
+                  <th>CAPEX Total</th>
+                  <th>Fornecedores Ativos</th>
+                  <th>Diagnóstico de Liquidez</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyRegional">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-header">
+            <h3><i data-lucide="info"></i> Diagnóstico de Oportunidades por Região</h3>
+          </div>
+          <div class="regional-insights">
+            <div class="insight-item">
+              <div class="insight-icon blue"><i data-lucide="building"></i></div>
+              <div class="insight-text">
+                <h4>Grande São Paulo (Capital & ABC)</h4>
+                <p>Concentra R$ 232,4 Bi em CAPEX, com grande liquidez em metrô, habitação e saneamento. Mais de 26.900 fornecedores locais disponíveis.</p>
+              </div>
+            </div>
+
+            <div class="insight-item">
+              <div class="insight-icon amber"><i data-lucide="anchor"></i></div>
+              <div class="insight-text">
+                <h4>Baixada Santista / Porto de Santos</h4>
+                <p><strong>Déficit de Fornecedores Locais:</strong> R$ 112,6 Bi em CAPEX (VLI, Dragagem, Terminais) para apenas 882 fornecedores locais. Alta oportunidade para empresas da capital atenderem o litoral.</p>
+              </div>
+            </div>
+
+            <div class="insight-item">
+              <div class="insight-icon green"><i data-lucide="cpu"></i></div>
+              <div class="insight-text">
+                <h4>Região Metropolitana de Campinas (RMC)</h4>
+                <p>Polo de Tecnologia e Infraestrutura Pesada (Microsoft, AWS Data Centers, Viracopos). R$ 36,7 Bi em investimentos.</p>
+              </div>
+            </div>
+
+            <div class="insight-item">
+              <div class="insight-icon purple"><i data-lucide="truck"></i></div>
+              <div class="insight-text">
+                <h4>Sorocaba & Interior Central</h4>
+                <p>Polo Automotivo e Ferroviário (Expansão Toyota R$ 11 Bi, Rumo Malha Paulista). R$ 28,8 Bi em investimentos mapeados.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 8: CADEIA DE FORNECEDORES -->
+    <section id="tab-suppliers" class="tab-content">
+      <div class="suppliers-hero">
+        <div class="kpi-grid">
+          <div class="kpi-card" data-accent="blue">
+            <div class="kpi-icon"><i data-lucide="warehouse"></i></div>
+            <div class="kpi-info">
+              <span class="kpi-title">Parque Total de Fornecedores</span>
+              <div class="kpi-value">76.244</div>
+              <span class="kpi-sub">R$ 6,06 Trilhões de Capital Social</span>
+            </div>
+          </div>
+
+          <div class="kpi-card" data-accent="purple">
+            <div class="kpi-icon"><i data-lucide="truck"></i></div>
+            <div class="kpi-info">
+              <span class="kpi-title">Materiais & Equipamentos</span>
+              <div class="kpi-value">13.159</div>
+              <span class="kpi-sub">Indústrias, Siderúrgicas e Cimenteiras</span>
+            </div>
+          </div>
+
+          <div class="kpi-card" data-accent="green">
+            <div class="kpi-icon"><i data-lucide="hammer"></i></div>
+            <div class="kpi-info">
+              <span class="kpi-title">Mão de Obra & Serviços</span>
+              <div class="kpi-value">63.085</div>
+              <span class="kpi-sub">Empreiteiras, Instaladoras e Projetistas</span>
+            </div>
+          </div>
+
+          <div class="kpi-card" data-accent="amber">
+            <div class="kpi-icon"><i data-lucide="phone-call"></i></div>
+            <div class="kpi-info">
+              <span class="kpi-title">Contactabilidade</span>
+              <div class="kpi-value">89,5% <small>Telefones</small></div>
+              <span class="kpi-sub">87,7% E-mails de Contato</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
+          <h3><i data-lucide="layers"></i> Top Linhas de Fornecimento & Especialidades Técnicas em SP</h3>
+          <a class="btn btn-primary btn-sm" href="fornecedores.html"><i data-lucide="search"></i> Explorar os 76.244 fornecedores</a>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="tableSuppliersCategories">
+            <thead>
+              <tr>
+                <th>Especialidade Técnica</th>
+                <th>Macro Categoria</th>
+                <th>Empresas Ativas</th>
+                <th>Capital Social Total</th>
+                <th>Matches Homologados</th>
+              </tr>
+            </thead>
+            <tbody id="tbodySuppliersCategories">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: DOSSIÊ 360° COMPLETO DA OBRA -->
+  <div id="obraModal" class="modal-backdrop hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="badge" id="modalStatusBadge">STATUS</span>
+          <h2 id="modalObraNome">Nome da Obra</h2>
+          <div class="modal-meta" id="modalObraMeta">
+            <!-- Muni, Setor, ID -->
+          </div>
+        </div>
+        <button class="modal-close" id="btnModalClose">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- Section IA: Predictive Intelligence & Timing Score -->
+        <div class="modal-section ai-section">
+          <div class="modal-section-title"><i data-lucide="sparkles" class="text-gold"></i> Score Preditivo & Inteligência Comercial da IA</div>
+          <div class="ai-insight-banner">
+            <div class="ai-insight-left">
+              <div class="ai-metric">
+                <span class="ai-lbl">Probabilidade de Fechamento B2B</span>
+                <div class="ai-val-score" id="modalAiProb">94% <small>(Excelente)</small></div>
+              </div>
+              <div class="ai-metric">
+                <span class="ai-lbl">Janela de Oportunidade / Timing</span>
+                <div class="ai-val-timing" id="modalAiTiming">Iminente (0-45 dias)</div>
+              </div>
+            </div>
+            <div class="ai-insight-right">
+              <span class="ai-rec-title"><i data-lucide="bot"></i> Recomendação Estratégica da IA:</span>
+              <p id="modalAiRec" class="ai-rec-text">Abordar decisor líder com proposta técnica de fornecimento e homologação de vendor list.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 1: Ficha Financeira e Escopo -->
+        <div class="modal-section">
+          <div class="modal-section-title"><i data-lucide="file-text"></i> Escopo & Detalhes Financeiros</div>
+          <div class="modal-grid-3">
+            <div class="info-block">
+              <label>CAPEX Estimado</label>
+              <div class="val highlight" id="modalCapex">R$ 0,00</div>
+            </div>
+            <div class="info-block">
+              <label>Fase Real</label>
+              <div class="val" id="modalFaseReal">-</div>
+            </div>
+            <div class="info-block">
+              <label>Nível de Qualidade</label>
+              <div class="val" id="modalQualidade">-</div>
+            </div>
+          </div>
+          <div class="modal-grid-2">
+            <div class="info-block">
+              <label>Empresa Contratante</label>
+              <div class="val" id="modalContratante">-</div>
+            </div>
+            <div class="info-block">
+              <label>Empresa Executora</label>
+              <div class="val" id="modalExecutora">-</div>
+            </div>
+          </div>
+          <div class="info-block">
+            <label>Descrição Completa do Escopo</label>
+            <p class="desc-text" id="modalDescricao">-</p>
+          </div>
+        </div>
+
+        <!-- Section 2: Painel de Decisores Mapeados -->
+        <div class="modal-section">
+          <div class="modal-section-title">
+            <i data-lucide="users"></i> Decisores Mapeados & Contatos Chave
+            <span class="badge-count" id="modalDecisoresCount">0</span>
+          </div>
+          <div id="modalDecisoresList" class="decisores-cards-list">
+            <!-- Decisores Cards via JS -->
+          </div>
+        </div>
+
+        <!-- Section 3: Fornecedores Homologados & Matches -->
+        <div class="modal-section">
+          <div class="modal-section-title">
+            <i data-lucide="check-check"></i> Fornecedores Homologados & Recomendados
+            <span class="badge-count badge-blue" id="modalMatchesCount">0</span>
+          </div>
+          <div class="info-block" id="modalDemandaBlock">
+            <label>Demanda Estimada de Insumos da Obra</label>
+            <div class="val text-green" id="modalDemandaInsumos">R$ 0,00</div>
+          </div>
+          <div id="modalSuppliersList" class="suppliers-matches-list">
+            <!-- Suppliers matches via JS -->
+          </div>
+        </div>
+
+        <!-- Section 4: Auditoria & Fonte -->
+        <div class="modal-section">
+          <div class="modal-section-title"><i data-lucide="link"></i> Rastreabilidade & Fonte Primária</div>
+          <div class="modal-grid-2">
+            <div class="info-block">
+              <label>Fonte Primária</label>
+              <div class="val" id="modalFontePrimaria">-</div>
+            </div>
+            <div class="info-block">
+              <label>Data de Publicação / Anúncio</label>
+              <div class="val" id="modalDataPub">-</div>
+            </div>
+          </div>
+          <div class="info-block" id="modalUrlBlock">
+            <label>Link Oficial da Fonte</label>
+            <a href="#" target="_blank" class="link-btn" id="modalUrlLink">
+              <i data-lucide="external-link"></i> Acessar Documento Oficial da Fonte
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer flex-between">
+        <div class="modal-footer-left">
+          <button class="btn btn-secondary" id="btnModalAddCrm" onclick="addCurrentModalToCrm()">
+            <i data-lucide="user-plus"></i> + Funil CRM
+          </button>
+          <button class="btn btn-secondary" id="btnModalCadence" onclick="openCadenceFromModal()">
+            <i data-lucide="message-square"></i> Gerar Cadência
+          </button>
+          <button class="btn btn-secondary" id="btnModalRfq" onclick="openRfqFromModal()">
+            <i data-lucide="calculator"></i> Montar RFQ
+          </button>
+        </div>
+        <div class="modal-footer-right">
+          <button class="btn btn-secondary" id="btnModalCloseFooter">Fechar</button>
+          <button class="btn btn-primary" id="btnModalCopyDossie">
+            <i data-lucide="copy"></i> Copiar Dossiê Completo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GERADOR DE CADÊNCIA & SCRIPTS DE ABORDAGEM COMERCIAL -->
+  <div id="cadenceModal" class="modal-backdrop hidden">
+    <div class="modal-dialog modal-cadence">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="badge badge-execucao"><i data-lucide="sparkles"></i> IA COMERCIAL</span>
+          <h2>Gerador de Cadência & Scripts de Abordagem</h2>
+          <div class="modal-meta" id="cadenceObraMeta">Obra • Decisor</div>
+        </div>
+        <button class="modal-close" onclick="closeCadenceModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- Channel 1: WhatsApp -->
+        <div class="cadence-channel-card">
+          <div class="channel-header">
+            <div class="channel-title">
+              <i data-lucide="message-circle" class="text-green"></i>
+              <h4>1. Script Direto para WhatsApp</h4>
+            </div>
+            <div class="channel-actions">
+              <button class="btn btn-ghost btn-sm" onclick="copyCadenceScript('cadenceTextWhatsapp')">
+                <i data-lucide="copy"></i> Copiar
+              </button>
+              <button class="btn btn-secondary btn-sm" id="btnCadenceOpenWa" onclick="openCadenceWhatsapp()">
+                <i data-lucide="external-link"></i> Abrir WhatsApp Web
+              </button>
+            </div>
+          </div>
+          <textarea id="cadenceTextWhatsapp" class="cadence-textarea" rows="4"></textarea>
+        </div>
+
+        <!-- Channel 2: Cold Mail B2B -->
+        <div class="cadence-channel-card">
+          <div class="channel-header">
+            <div class="channel-title">
+              <i data-lucide="mail" class="text-cyan"></i>
+              <h4>2. Cold Mail Executivo B2B</h4>
+            </div>
+            <div class="channel-actions">
+              <button class="btn btn-ghost btn-sm" onclick="copyCadenceScript('cadenceTextEmailBody')">
+                <i data-lucide="copy"></i> Copiar
+              </button>
+              <button class="btn btn-secondary btn-sm" id="btnCadenceOpenMail" onclick="openCadenceMailto()">
+                <i data-lucide="send"></i> Abrir E-mail
+              </button>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary);">Assunto Sugerido:</label>
+            <input type="text" id="cadenceTextEmailSubject" class="form-input" readonly>
+          </div>
+          <textarea id="cadenceTextEmailBody" class="cadence-textarea" rows="6"></textarea>
+        </div>
+
+        <!-- Channel 3: LinkedIn InMail -->
+        <div class="cadence-channel-card">
+          <div class="channel-header">
+            <div class="channel-title">
+              <i data-lucide="briefcase-business" class="text-blue"></i>
+              <h4>3. Conexão Consultiva no LinkedIn</h4>
+            </div>
+            <div class="channel-actions">
+              <button class="btn btn-ghost btn-sm" onclick="copyCadenceScript('cadenceTextLinkedin')">
+                <i data-lucide="copy"></i> Copiar
+              </button>
+              <a id="btnCadenceOpenLkd" href="#" target="_blank" class="btn btn-secondary btn-sm">
+                <i data-lucide="external-link"></i> Acessar Perfil
+              </a>
+            </div>
+          </div>
+          <textarea id="cadenceTextLinkedin" class="cadence-textarea" rows="4"></textarea>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCadenceModal()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden">
+    <i data-lucide="check-circle" class="toast-icon"></i>
+    <span id="toastMsg">Mensagem</span>
+  </div>
+
+  <!-- Application Logic -->
+  <script src="app.js?v=6"></script>
+</body>
+</html>
